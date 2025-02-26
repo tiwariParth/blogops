@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Deploy Blog to Kubernetes
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build-and-push:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       # Step 1: Checkout the code
@@ -23,7 +23,7 @@ jobs:
         with:
           registry: ghcr.io
           username: tiwariparth
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GHCR_TOKEN }}
 
       # Step 4: Build and push Docker image
       - name: Build and push Docker image
@@ -32,3 +32,13 @@ jobs:
           context: .
           push: true
           tags: ghcr.io/tiwariparth/blogops:latest
+
+      # Step 5: Deploy to Kubernetes
+      - name: Deploy to Kubernetes
+        run: |
+          mkdir -p $HOME/.kube
+          echo "$KUBECONFIG" > $HOME/.kube/config
+          kubectl apply -f deployment.yaml
+          kubectl apply -f service.yaml
+        env:
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
